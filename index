@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Einstein in Classroom</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@webxr/polyfill@latest/build/webxr-polyfill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        let scene, camera, renderer, raycaster, pointer, avatar;
+
+        // Inizializzazione della scena
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Luce ambientale
+            let light = new THREE.HemisphereLight(0xffffff, 0x444444);
+            light.position.set(0, 200, 0);
+            scene.add(light);
+
+            // Creazione dell'aula
+            createClassroom();
+
+            // Caricamento dell'avatar (modello di Einstein)
+            let loader = new THREE.GLTFLoader();
+            loader.load(https://static.wixstatic.com/3d/b5100d_c8922f59e7554f2eaecbba34801ef49a.glb, function(gltf) { // Inserisci qui il link al modello 3D
+                avatar = gltf.scene;
+                avatar.scale.set(0.5, 0.5, 0.5); // Ridimensiona l'avatar
+                avatar.position.set(0, 0, 0); // Posizione iniziale
+                scene.add(avatar);
+            });
+
+            // Raycaster per il rilevamento del movimento
+            raycaster = new THREE.Raycaster();
+            pointer = new THREE.Vector2();
+
+            window.addEventListener('click', onPointerClick, false);
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Posiziona la camera
+            camera.position.z = 10;
+        }
+
+        // Crea l'aula universitaria
+        function createClassroom() {
+            let floorGeometry = new THREE.PlaneGeometry(20, 20);
+            let floorMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 });
+            let floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+
+            // Crea muri
+            let wallMaterial = new THREE.MeshPhongMaterial({ color: 0xeeeeee });
+            let backWall = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMaterial);
+            backWall.position.z = -10;
+            backWall.position.y = 5;
+            scene.add(backWall);
+
+            let sideWall1 = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMaterial);
+            sideWall1.position.x = -10;
+            sideWall1.position.y = 5;
+            sideWall1.rotation.y = Math.PI / 2;
+            scene.add(sideWall1);
+
+            let sideWall2 = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMaterial);
+            sideWall2.position.x = 10;
+            sideWall2.position.y = 5;
+            sideWall2.rotation.y = -Math.PI / 2;
+            scene.add(sideWall2);
+
+            // Crea una lavagna
+            let boardMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+            let board = new THREE.Mesh(new THREE.PlaneGeometry(8, 3), boardMaterial);
+            board.position.set(0, 5, -9.9);
+            scene.add(board);
+        }
+
+        // Funzione per il ridimensionamento della finestra
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Funzione per muovere l'avatar quando si clicca sulla scena
+        function onPointerClick(event) {
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(pointer, camera);
+
+            let intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0 && avatar) {
+                let target = intersects[0].point;
+                avatar.position.set(target.x, 0, target.z);
+            }
+        }
+
+        // Funzione di rendering e animazione
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // Inizializza e anima la scena
+        init();
+        animate();
+    </script>
+</body>
+</html>
